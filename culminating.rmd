@@ -1,0 +1,124 @@
+---
+title: "Culminating Activity"
+author: Avryl Joie Arranguez, Dustin Jesse Balansag, Leira Bengil, John Andrew Chua,
+  Jian Bryce Machacon
+date: "2026-05-03"
+output:
+  html_document:
+    df_print: paged
+---
+# Initializing & inspecting the Dataset
+```{r}
+setwd("C:/Users/USER/OneDrive/Desktop/web projects/R/github-R")
+github_dataset <- read.csv("github_top_repositories.csv")
+
+summary(github_dataset)
+str(github_dataset)
+```
+## Data cleaning
+```{r}
+# check for na values
+colSums(is.na(github_dataset))
+sum(github_dataset$Description == "")
+sum(github_dataset$Primary.Language == "None")
+```
+```{r}
+library(dplyr) 
+github_dataset_unique <- github_dataset %>% #remove duplicates
+  distinct(Full.Name, .keep_all = TRUE)
+
+nrow(github_dataset)        
+nrow(github_dataset_unique)
+```
+# EDA
+```{r}
+library(ggplot2)
+library(tidyr)
+library(car)
+
+#categorical
+github_dataset_unique %>%
+  filter(Primary.Language != "None" & Primary.Language != "") %>%
+  count(Primary.Language, sort = TRUE) %>%
+  slice_max(n, n = 10) %>%
+  ggplot(aes(x = reorder(Primary.Language, n), y = n, fill = Primary.Language)) +
+  geom_col(color = "white") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(
+    title = "Top 10 Most Frequent Primary Languages",
+    x = "Programming Language",
+    y = "Repository Count"
+  )
+
+# 1. Select and rename continuous variables
+continuous_data <- github_dataset_unique %>%
+  select(
+    stars  = contains("Stars"),
+    forks  = contains("Forks"),
+    issues = contains("Issues"),
+    size   = contains("Size"),
+    watchers = contains("Watchers.count")
+  )
+
+# 2. Inspect the data
+summary(continuous_data)
+
+# 3. Plot the scatter plot matrix
+scatterplotMatrix(continuous_data)
+
+```
+You can see there is a correlation between forks vs stars but based on the distribution on the continuous variables, they are very right skewed. Watcher and stars also have the same values because "watching" a repository meant both bookmarking it (starring) and subscribing to its notifications. Later on, GitHub separated these into Starring (bookmarking/liking) and Watching (subscribing to updates). Basically the field watchers_count is an older, legacy field that GitHub kept for backwards compatibility, which actually just returns the exact same number as the stargazers/stars so we chose to drop watchers.
+
+# dealing with the extreme right skew
+```{r}
+log_continuous_data <- continuous_data %>%
+  mutate(
+    stars  = log1p(stars),
+    forks  = log1p(forks),
+    issues = log1p(issues),
+    size   = log1p(size)
+  )
+
+# 3. Inspect the newly transformed data
+# You'll notice the mean and median are now much closer together (symmetrical!)
+summary(log_continuous_data)
+
+# 4. Plot the new, log-transformed scatter plot matrix
+# The data points will no longer be squished in the bottom-left corner.
+# Instead, they will be beautifully spread out, allowing you to see linear relationships!
+scatterplotMatrix(log_continuous_data)
+```
+```{r}
+simple_data <- github_dataset_unique %>%
+  select(
+    stars = contains("Stars"),
+    forks = contains("Forks")
+  ) %>%
+  mutate(
+    log_stars = log1p(stars),
+    log_forks = log1p(forks)
+  )
+
+model_simple <- lm(log_stars ~ log_forks, data = simple_data)
+summary(model_simple)
+
+ggplot(simple_data, aes(x = log_forks, y = log_stars)) +
+  geom_point(alpha = 0.4, color = "steelblue") +
+  geom_smooth(method = "lm", color = "darkorange", size = 1.2) +
+  theme_minimal() +
+  labs(
+    title = "Simple Linear Regression: Stars vs. Forks",
+    subtitle = "Visualized on a Log-Log Scale",
+    x = "log(Forks Count + 1)",
+    y = "log(Stars Count + 1)"
+  )
+```
+
+
+
+
+
+
+
