@@ -9,7 +9,7 @@ output:
 ---
 # Initializing & inspecting the Dataset
 ```{r}
-setwd("/home/shiro/Documents/School/2nd Year 2nd Sem/Data Analytics/Culminating Activity/")
+setwd("/home/matchacone/Downloads/Data-Analytics-Culminating-Activity-main")
 github_dataset <- read.csv("github_top_repositories.csv")
 
 summary(github_dataset)
@@ -91,122 +91,28 @@ summary(log_continuous_data)
 scatterplotMatrix(log_continuous_data)
 ```
 ```{r}
-simple_data <- github_dataset_unique %>%
+regression_data <- github_dataset_unique %>%
   select(
-    stars = contains("Stars"),
-    forks = contains("Forks")
-  ) %>%
-  mutate(
-    log_stars = log1p(stars),
-    log_forks = log1p(forks)
+    stars  = Stars.Count,
+    forks  = Forks.Count,
+    issues = Open.Issues.Count,
+    size   = Size..KB.
   )
 
-model_simple <- lm(log_stars ~ log_forks, data = simple_data)
-summary(model_simple)
+model_multiple <- lm(stars ~ ., data = regression_data)
+summary(model_multiple)
 
-ggplot(simple_data, aes(x = log_forks, y = log_stars)) +
+regression_data$predicted <- predict(model_multiple)
+
+ggplot(regression_data, aes(x = predicted, y = stars)) +
   geom_point(alpha = 0.4, color = "steelblue") +
-  geom_smooth(method = "lm", color = "darkorange", size = 1.2) +
+  # This orange line represents a perfect prediction
+  geom_abline(slope = 1, intercept = 0, color = "darkorange", linewidth = 1.2) +
   theme_minimal() +
   labs(
-    title = "Simple Linear Regression: Stars vs. Forks",
-    subtitle = "Visualized on a Log-Log Scale",
-    x = "log(Forks Count + 1)",
-    y = "log(Stars Count + 1)"
+    title = "Multiple Linear Regression: Actual vs. Predicted Stars",
+    subtitle = "Predictors: Forks, Issues, and Size (Log-Log Scale)",
+    x = "Predicted log(Stars + 1)",
+    y = "Actual log(Stars + 1)"
   )
-```
-
-
-
-```{r}
-library(rpart)
-library(rpart.plot)
-library(caret)
-
-github_dataset_unique$is_python<-ifelse(!is.na(github_dataset_unique$Primary.Language) & github_dataset_unique$Primary.Language == "Python", "Python", "Non-Python")
-github_dataset_unique$is_python<-factor(github_dataset_unique$is_python)
-
-set.seed(123)
-train_index<-createDataPartition(github_dataset_unique$is_python, p = 0.7, list = FALSE)
-train_set<-github_dataset_unique[train_index, ]
-test_set<-github_dataset_unique[-train_index, ]
-
-cart_model<-rpart(is_python ~ Stars.Count + Forks.Count + Open.Issues.Count + Size..KB., 
-                  data = train_set, 
-                  method = "class")
-
-prp(cart_model, type = 2, extra = 104, main = "CART: Predicting Python Repositories")
-
-evaluate_cart<-function(model, test_data){
-
-  predictions<-predict(model, test_data, type = "class")
-  return(confusionMatrix(predictions, test_data$is_python))
-
-}
-
-results<-evaluate_cart(cart_model, test_set)
-print(results)
-```
-
-```{r}
-library(cluster)
-library(factoextra)
-
-log_continuous_data$is_python<-github_dataset_unique$is_python
-
-kmeans_input<-log_continuous_data %>%
-  select(stars, forks, issues, size)
-
-kmeans_scaled<-scale(kmeans_input)
-
-set.seed(123)
-
-calculate_wss<-function(k){
-
-  return(kmeans(kmeans_scaled, centers = k, nstart = 25)$tot.withinss)
-
-}
-
-k_values<-1:10
-wss_results<-sapply(k_values, calculate_wss)
-
-plot(k_values, wss_results, type = "b", pch = 19, frame = FALSE, 
-     xlab = "Number of Clusters K",
-     ylab = "Total Within-Cluster Sum of Squares (WSS)",
-     main = "Elbow Method for Optimal K")
-
-k_final<-3
-kmeans_final<-kmeans(kmeans_scaled, centers = k_final, nstart = 25)
-
-log_continuous_data$cluster<-as.factor(kmeans_final$cluster)
-
-ggplot(log_continuous_data, aes(x = forks, y = stars, color = cluster)) +
-  geom_point(alpha = 0.5) +
-  theme_minimal() +
-  labs(
-    title = paste("K-Means Clustering Result (K =", k_final, ")"),
-    subtitle = "Clusters based on Stars, Forks, Issues, and Size",
-    x = "log(Forks + 1)",
-    y = "log(Stars + 1)"
-  )
-
-cluster_profiles<-aggregate(cbind(stars, forks, issues, size) ~ cluster, 
-                            data = log_continuous_data, 
-                            FUN = mean)
-
-cluster_counts<-as.data.frame(table(log_continuous_data$cluster))
-colnames(cluster_counts)<-c("cluster", "count")
-
-final_summary_table<-merge(cluster_profiles, cluster_counts, by = "cluster")
-
-print(final_summary_table)
-
-compare_matrix<-table(Actual = log_continuous_data$is_python, Predicted = log_continuous_data$cluster)
-print(addmargins(compare_matrix))
-
-cluster_centers<-aggregate(cbind(stars, forks, issues, size) ~ cluster, 
-                           data = log_continuous_data, 
-                           FUN = mean)
-
-print(cluster_centers)
 ```
