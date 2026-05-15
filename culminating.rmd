@@ -9,7 +9,7 @@ output:
 ---
 # Initializing & inspecting the Dataset
 ```{r}
-setwd("/home/matchacone/Downloads/Data-Analytics-Culminating-Activity-main")
+setwd("C:/Users/USER/OneDrive/Desktop/web projects/R/github-R")
 github_dataset <- read.csv("github_top_repositories.csv")
 
 summary(github_dataset)
@@ -116,3 +116,80 @@ ggplot(regression_data, aes(x = predicted, y = stars)) +
     y = "Actual log(Stars + 1)"
   )
 ```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# 1. Prepare the data (using unique dataset already created)
+regression_data <- github_dataset_unique %>%
+  select(
+    stars  = Stars.Count,
+    forks  = Forks.Count,
+    issues = Open.Issues.Count,
+    size   = Size..KB.
+  )
+
+# 2. Split the data 80/20
+set.seed(42) # For reproducibility
+sample_size <- floor(0.80 * nrow(regression_data))
+train_indices <- sample(seq_len(nrow(regression_data)), size = sample_size)
+
+train_data <- regression_data[train_indices, ]
+test_data  <- regression_data[-train_indices, ]
+
+# 3. Train the Multiple Linear Regression model on training data
+model_raw <- lm(stars ~ forks + issues + size, data = train_data)
+
+# Show model coefficients and training performance
+summary(model_raw)
+
+# 4. Predict on the test set (the 20% holdout)
+test_data$predicted_stars <- predict(model_raw, newdata = test_data)
+
+# 5. Evaluate performance on the test set
+# Calculate Mean Absolute Error (MAE)
+mae <- mean(abs(test_data$predicted_stars - test_data$stars))
+# Calculate R-squared for test set
+rss <- sum((test_data$predicted_stars - test_data$stars)^2)
+tss <- sum((test_data$stars - mean(test_data$stars))^2)
+test_r2 <- 1 - (rss/tss)
+
+print(paste("Mean Absolute Error (MAE):", round(mae, 2)))
+print(paste("Test Set R-squared:", round(test_r2, 4)))
+
+# 6. Visualization: Actual vs. Predicted
+ggplot(test_data, aes(x = predicted_stars, y = stars)) +
+  geom_point(alpha = 0.5, color = "darkgreen") +
+  # Red dashed line represents a perfect 1:1 prediction
+  geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed", linewidth = 1) +
+  theme_minimal() +
+  labs(
+    title = "Predictive Analytics: Actual vs. Predicted Stars",
+    subtitle = "Tested on 20% Holdout Data (Raw Scale)",
+    x = "Predicted Stars",
+    y = "Actual Stars"
+  )
+```
+## Analysis of Predictive Results
+Following the 80/20 train-test split requested, the Multiple Linear Regression model was trained on 80% of the data and validated against the remaining 20% holdout set. Despite the extreme right skew of the raw data, the model yielded strong predictive insights.
+
+###1. Model Equation and Coefficient Interpretation
+The resulting regression equation is:
+$$\text{Stars} = 8,365 + (3.758 \times \text{Forks}) + (1.158 \times \text{Issues}) - (0.0015 \times \text{Size})$$
+Forks (Estimate: 3.758): This is the most influential predictor. For every single additional fork, the model predicts an increase of approximately 3.76 stars. This high coefficient suggests that developers who fork a repository (indicating intent to contribute or build upon the code) are highly likely to have also "starred" the project.
+
+Open Issues (Estimate: 1.158): Interestingly, a higher count of open issues is associated with a higher star count. While issues can represent bugs, in top-tier repositories, they often signify a high level of user engagement and an active community.
+
+Size (Estimate: -0.0015): The size of the repository has a negligible and slightly negative impact. This suggests that the physical scale of the codebase is not a driver of popularity; rather, community interaction (forks/issues) is what determines star counts.
+
+## 2. Statistical Significance
+
+All predictors yielded $p$-values significantly lower than the standard alpha of 0.05 (specifically $p < 0.001$ for Forks and Size, and $p < 0.01$ for Issues). This confirms that the relationship between these independent variables and the star count is statistically significant and not due to random chance.
+
+## 3. Predictive Accuracy and Generalization
+Test Set R-squared (0.6455): The model achieved an R-squared of 64.55% on the test set. Remarkably, this is higher than the training R-squared (56.33%), indicating that the model generalizes exceptionally well and is not overfitted to the training data. It effectively explains nearly two-thirds of the variance in stars.
+
+Mean Absolute Error (MAE: 8,921.31): On average, our predictions deviate from the actual star count by approximately 8,921 stars. Given that the dataset includes "superstar" repositories with counts exceeding 100,000, this level of error is acceptable for a raw-scale linear model.
+## 4. Conclusion for Predictive Analytics
+The visualization of Actual vs. Predicted Stars shows a strong linear trend along the identity line (the red dashed line). While the raw values lead to some large residuals for extreme outliers (viral repositories), the model successfully captures the underlying trend of the GitHub ecosystem: Engagement (Forks) and Activity (Issues) are the primary engines of repository popularity.
