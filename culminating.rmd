@@ -111,7 +111,7 @@ ggplot(regression_data, aes(x = predicted, y = stars)) +
   theme_minimal() +
   labs(
     title = "Multiple Linear Regression: Actual vs. Predicted Stars",
-    subtitle = "Predictors: Forks, Issues, and Size (Log-Log Scale)",
+    subtitle = "Predictors: Forks, Issues, and Size (Raw Scale)",
     x = "Predicted log(Stars + 1)",
     y = "Actual log(Stars + 1)"
   )
@@ -189,6 +189,8 @@ All predictors yielded $p$-values significantly lower than the standard alpha of
 
 ## 3. Predictive Accuracy and Generalization
 Test Set R-squared (0.6455): The model achieved an R-squared of 64.55% on the test set. Remarkably, this is higher than the training R-squared (56.33%), indicating that the model generalizes exceptionally well and is not overfitted to the training data. It effectively explains nearly two-thirds of the variance in stars.
+
+The training model yielded a Residual Standard Error (RSE) of 17,360. This metric represents the average deviation between the actual star count and the predicted star count. Given the massive scale of 'superstar' repositories in this dataset (some exceeding 400,000 stars), an RSE of this magnitude is expected when modeling raw, non-transformed data, as it reflects the inherent volatility and power-law distribution of GitHub popularity.
 
 Mean Absolute Error (MAE: 8,921.31): On average, our predictions deviate from the actual star count by approximately 8,921 stars. Given that the dataset includes "superstar" repositories with counts exceeding 100,000, this level of error is acceptable for a raw-scale linear model.
 ## 4. Conclusion for Predictive Analytics
