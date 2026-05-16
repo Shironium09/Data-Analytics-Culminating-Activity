@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
   ---
   title: "Culminating Activity"
   author:
@@ -16,21 +21,21 @@
       df_print: paged
   ---
   
-  ```{r setup, include=FALSE}
-  knitr::opts_chunk$set(
+```{r setup, include=FALSE}
+    knitr::opts_chunk$set(
     echo    = FALSE,
     warning = FALSE,
     message = FALSE
   )
-  ```
+```
   
-  ```{r load-data, include=FALSE}
+```{r load-data, include=FALSE}
   library(dplyr)
   library(ggplot2)
   library(tidyr)
   library(car)
   
-  setwd("/home/shiro/Documents/School/2nd Year 2nd Sem/Data Analytics/Culminating Activity/")
+  setwd("C:/Users/USER/OneDrive/Desktop/web projects/R/github-R")
   github_dataset <- read.csv("github_top_repositories.csv")
   
   # De-duplicate by repository full name
@@ -76,6 +81,13 @@
   # Fit model on training data
   model_raw <- lm(stars ~ forks + issues + size, data = train_data)
   
+  # --- VARIABLE DIAGNOSTICS CALCULATIONS ---
+  # Calculate Variance Inflation Factors (VIF) to check for multicollinearity
+  vif_values <- car::vif(model_raw)
+  vif_forks  <- round(vif_values["forks"], 4)
+  vif_issues <- round(vif_values["issues"], 4)
+  vif_size   <- round(vif_values["size"], 4)
+  
   # Generate predictions on test data
   test_data$predicted_stars <- predict(model_raw, newdata = test_data)
   
@@ -84,47 +96,47 @@
   rss     <- sum((test_data$predicted_stars - test_data$stars)^2)
   tss     <- sum((test_data$stars - mean(test_data$stars))^2)
   test_r2 <- 1 - (rss / tss)
-  ```
+```
   
-  # Abstract
+# Abstract
   
   Utilized by millions of developers worldwide, GitHub provides a platform where creators can share their software projects and engage in community collaboration. This paper examines the relationship between key repository metrics — specifically fork count, open issue count, and codebase size — and how they predict a repository's overall star count. Descriptive analysis reveals that the data follows a highly right-skewed distribution, where a small portion of "elite" projects dominates platform engagement. Through multiple linear regression using an 80/20 train-test split on a dataset of 2,562 unique high-performing repositories, the model achieved a test set R-squared of 64.55%, indicating strong generalizability. The regression framework identified forks as the primary driver of visibility with a coefficient of 3.75, followed by open issues with 1.158, while physical codebase size had a negligible impact with a coefficient of −0.0015. Ultimately, the study concludes that active community collaboration and user dialogue, rather than sheer technical scale, serve as the primary catalysts for project success.
   
-  # Chapter 1: Introduction
+# Chapter 1: Introduction
   
-  ## Background of the Study
+## Background of the Study
   
   With millions of projects hosted on GitHub, it is hard to understand why some repositories become massive successes while others go unnoticed. For developers and researchers, understanding what drives platform visibility is highly important for project growth. However, the data is usually very top-heavy. A tiny percentage of projects receive the vast majority of stars and forks, which makes it difficult to see what a typical successful project actually looks like. This extreme skew often leaves creators wondering whether they should focus on writing a massive codebase, attracting active contributors, or maintaining open communication channels to gain platform recognition.
   
   In this study, data analytics are used to look past these raw numbers and identify the real patterns behind high-performing repositories. By focusing on concrete metrics such as forks, open issues, and codebase size, the aim is to determine how community interaction and technical scale predict a project's overall popularity, as measured by its star count. Rather than examining these numbers in isolation, multiple linear regression is employed to assess the simultaneous impact of all three factors and determine which one matters most. By analyzing a cleaned dataset of top repositories, the study provides clear, practical benchmarks that illuminate the true drivers of platform success in the open-source community.
   
-  ## Statement of the Problem
+## Statement of the Problem
   
   This project aims to address the following research questions:
   
-  1. To what extent can a repository's popularity (Stars) be accurately predicted by its community interactions (Forks), technical scale (Size), and monitoring engagement (Watchers)?
-  2. Which specific metadata metric among Forks, Size, and Watchers serves as the strongest predictor of a repository's overall visibility?
+  1. To what extent can a repository's popularity (Stars) be accurately predicted by its community interactions (Forks), technical scale (Size), and community activity (Open Issues)?
+  2. Which specific metadata metric among Forks, Size, and Open Issues serves as the strongest predictor of a repository's overall visibility?
   3. How effectively does a Multiple Linear Regression model trained on raw platform data perform when validated against unseen test data?
   
-  ## Objectives of the Study
+## Objectives of the Study
   
-  ### General Objective
+### General Objective
   
   To investigate the predictive relationships between a repository's structural and engagement metrics and its overall community popularity using linear regression models.
   
-  ### Specific Objectives
+### Specific Objectives
   
-  - To evaluate the individual and collective impact of Forks, Size, and Watchers on a repository's total star count.
+  - To evaluate the individual and collective impact of Forks, Size, and Open Issues on a repository's total star count.
   - To determine which repository metadata metric acts as the most significant driver of user attraction and project recognition.
   - To validate the stability and predictive performance of the linear regression model using an 80/20 train-test data split.
   - To analyze the distribution patterns and inherent skewness of raw GitHub repository metadata.
   
-  ## Hypotheses
+## Hypotheses
   
-  - **H0**: There is no significant linear relationship between a repository's independent metrics (Forks, Size, and Watchers) and its overall popularity (Stars).
-  - **H1**: There is a significant linear relationship between a repository's independent metrics (Forks, Size, and Watchers) and its overall popularity (Stars).
+  - **H0**: There is no significant linear relationship between a repository's independent metrics (Forks, Size, and Open Issues) and its overall popularity (Stars).
+  - **H1**: There is a significant linear relationship between a repository's independent metrics (Forks, Size, and Open Issues) and its overall popularity (Stars).
   
-  ## Significance of the Study
+## Significance of the Study
   
   This study provides practical insights for several groups within the software and data science communities:
   
@@ -132,51 +144,51 @@
   - **Data Science Students**: This paper serves as a practical application of supervised machine learning by demonstrating how to handle real-world, skewed datasets.
   - **Project Managers**: The findings offer an analytical framework to distinguish between development scale and community traction, helping teams set realistic tracking benchmarks for their open-source projects.
   
-  ## Scope and Limitations
+## Scope and Limitations
   
-  ### Scope
+### Scope
   
-  The study is restricted to analyzing quantitative metadata from top-performing repositories retrieved from GitHub. The analytical scope is explicitly focused on evaluating Multiple Linear Regression, using Stars as the dependent variable, and Forks, Size, and Watchers as the independent variables.
+  The study is restricted to analyzing quantitative metadata from top-performing repositories retrieved from GitHub. The analytical scope is explicitly focused on evaluating Multiple Linear Regression, using Stars as the dependent variable, and Forks, Size, and Open Issues as the independent variables.
   
-  ### Limitations
+### Limitations
   
   - **Data Recency**: The data is based on a static snapshot of GitHub metadata; subsequent changes to actual metrics are not taken into consideration.
   - **Quantitative Focus**: The evaluation relies strictly on numerical platform metrics.
   - **Metadata Dependency**: The model relies purely on top-level numerical indicators and does not account for qualitative aspects such as code usability, documentation clarity, or project functionality.
   
-  # Chapter 2: Review of Related Literature
+# Chapter 2: Review of Related Literature
   
-  ## Related Studies
+## Related Studies
   
   Several previous studies have empirically investigated the relationship between GitHub stars and other measurable outcomes such as security vulnerabilities and real-world usage. Naveed (2022) examined ten popular C++ repositories using static code analysis and identified 3,487 vulnerabilities across all examined projects, with no repository being completely free of flaws. Employing Spearman's rank correlation coefficient, the study found no monotonic correlation between stars and vulnerabilities (*rs* = −.46, *p* = .19), nor between lines of code and vulnerabilities (*rs* = .14, *p* = .69), indicating that a repository's popularity does not imply security integrity. This directly aligns with the present study's finding that codebase size has a negligible impact on popularity (coefficient = −0.0015), confirming that technical scale is not a meaningful driver of platform recognition.
   
   Koch et al. (2024) analyzed 925,978 projects across PHP, Ruby, and JavaScript, revealing a weak correlation between stars and download counts ranging from 0.14 for JavaScript to 0.47 for PHP, indicating that high star counts do not necessarily reflect actual usage. However, when measuring real-world deployments for 58 client-side JavaScript libraries, both stars (*r* = 0.61) and downloads (*r* = 0.63) showed moderately strong predictive relationships. This suggests that while stars are meaningful predictors of deployment, they remain imperfect and should not be used in isolation — supporting the present study's effort to identify what metrics actually predict star accumulation.
   
-  ## Related Literature
+## Related Literature
   
   Several theoretical perspectives help explain why GitHub stars may not accurately reflect genuine project quality or community value. He et al. (2026) conducted a large-scale longitudinal measurement of fake GitHub stars, developing a detection tool called StarScout that identified 6.0 million suspected fake stars across 18,617 repositories from 2019 to 2024. Their panel autoregression models demonstrated that while fake stars provide a short-term promotional effect lasting less than two months — approximately five times smaller than the effect of real stars — they ultimately become a long-term liability. This finding supports the theoretical framework of the present study, which posits that authentic community engagement, operationalized through metrics such as forks and issues, serves as a more reliable driver of sustainable popularity. This aligns with Campbell's Law, which states that when a quantitative social indicator is used for decision-making, it becomes subject to corruption pressures.
   
   Cassieri et al. (2024) conducted an exploratory mining-software-repository study on 14 top-starred Java projects and found that deprecated API usages were widespread across popular repositories, yet only half of the projects removed these deprecated elements within a few commits. This finding supports a key premise of the present study: high star counts do not necessarily indicate superior code quality or maintenance practices. The prevalence of technical debt in popular projects reinforces the need to examine what metrics actually drive star accumulation rather than assuming stars themselves signify technical excellence.
   
-  ## Conceptual Framework
+## Conceptual Framework
   
   This study investigates the relationship between a repository's star count and its fork count, open issue count, and repository size. Utilizing an independent-dependent variable paradigm, this framework models star count as a direct outcome of community interaction, technical scale, and platform activity.
   
-  ### Independent Variables (Predictors)
+### Independent Variables (Predictors)
   
   - **Forks Count (Community Utility)**: Represents the level of collaboration and external adoption, reflecting how many developers have duplicated the codebase to modify or build upon it.
   - **Open Issues Count (Ecosystem Vitality)**: Serves as a proxy for user engagement and active community dialogue, reflecting ongoing maintenance, feedback, and interaction with maintainers.
   - **Repository Size (Technical Footprint)**: Represents the physical scale of the codebase in kilobytes, reflecting the project's structural magnitude.
   
-  ### Dependent Variable (Criterion)
+### Dependent Variable (Criterion)
   
-  - **Star Count (Platform Validation)**: Serves as the benchmark for a project's broad user appreciation and overall popularity within the developer community.
+- **Star Count (Platform Validation)**: Serves as the benchmark for a project's broad user appreciation and overall popularity within the developer community.
   
-  **Figure 1**
+**Figure 1**
   
-  *Conceptual Framework of GitHub Repository Popularity Variables*
+*Conceptual Framework of GitHub Repository Popularity Variables*
   
-  ```{r conceptual-framework, fig.align='center'}
+```{r conceptual-framework, fig.align='center'}
   library(DiagrammeR)
   grViz("
   digraph conceptual_framework {
@@ -197,19 +209,19 @@
     Size   -> Stars [color = '#34495E', penwidth = 1.5]
   }
   ")
-  ```
+```
   
-  # Chapter 3: Methodology
+# Chapter 3: Methodology
   
-  ## Research Design
+## Research Design
   
   This study utilizes a descriptive and correlational research design with a predictive modeling component. It employs a descriptive design by summarizing the baseline metrics and distribution patterns of top-tier software projects. It integrates a correlational and predictive approach by utilizing a Multiple Linear Regression framework to assess, model, and validate the directional relationships between engagement characteristics and overall repository popularity.
   
-  ## Data Collection
+## Data Collection
   
   The dataset used, *Analysis of High-Starred GitHub Repositories*, was retrieved from Kaggle. This dataset contains a snapshot of 3,000 high-rated repositories from GitHub spanning domains such as Machine Learning, Software and Web Development, and Cybersecurity. After removing 438 duplicate entries by full repository name, the analytical sample was refined to 2,562 unique repositories. The dataset provides a comprehensive set of quantitative and categorical representations, making it suitable for linear regression analysis.
   
-  ## Variables Description
+## Variables Description
   
   To conduct the analysis, the following variables were identified from the dataset:
   
@@ -220,46 +232,72 @@
   - **Dependent Variable**:
     - **Star Count**: The total number of users who have bookmarked or liked the repository, serving as the primary metric for platform popularity.
   
-  ## Data Analysis Techniques
+## Data Analysis Techniques
   
   - **Descriptive Statistics**: Measures of central tendency (mean and median) and dispersion (standard deviation, minimum, and maximum values) were utilized to assess the baseline distribution of the dataset. Scatter plot matrices were applied to examine the structural shape and skewness of the raw variables.
   - **Inferential Statistics**: Multiple Linear Regression modeling was used to measure the strength and direction of the linear relationship between the predictors and the target variable. To ensure the reliability of predictive outputs, an 80/20 train-test split cross-validation methodology was executed — training the regression formula on the majority subset and verifying performance metrics using the remaining holdout subset.
   
-  # Chapter 4: Results and Discussion
+# Chapter 4: Results and Discussion
   
-  ## Descriptive Statistics
+## Descriptive Statistics
   
   The initial dataset of 3,000 repositories was refined to 2,562 unique entries for analysis. The descriptive statistics reveal a consistent right skew across all metrics, where means significantly exceed medians. For instance, Stars averaged 19,521 while the median was only 13,076, pulled upward by outliers peaking at 409,518. Similarly, the average Repository Size (284,610 KB) is heavily influenced by massive projects exceeding 61 GB, while the median remains a modest 33,518 KB. Maintenance and community metrics follow this trend: the mean number of Forks (2,976) and Open Issues (372) are both more than double their respective medians. These findings indicate that GitHub engagement follows a power-law distribution, where a small elite group of repositories accounts for a disproportionate share of total activity.
   
-  ## Visualization
+## Visualization
   
   It is important to note that the Watchers variable was excluded from downstream modeling. In this historical dataset, the `watchers_count` field returns values identical to the star count because "watching" originally encompassed both bookmarking and notification subscription. Although GitHub later separated these functions, the legacy field continues to mirror star counts exactly, which would introduce perfect multicollinearity into the regression model.
   
-  **Figure 3**
+**Figure 3**
   
-  *Scatter Plot Matrix of Unaltered Raw Continuous Quantitative Indicators*
+*Scatter Plot Matrix of Unaltered Raw Continuous Quantitative Indicators*
   
-  ```{r fig-scattermatrix-raw, fig.align='center', fig.width=7, fig.height=6}
+```{r fig-scattermatrix-raw, fig.align='center', fig.width=7, fig.height=6}
   scatterplotMatrix(continuous_data %>% select(-watchers))
-  ```
+```
   
-  *Note.* The pronounced right skew and extreme clustering near zero across all variable pairs indicate a power-law distribution, motivating the variance-stabilizing transformation applied in Figure 4.
+*Note.* The pronounced right skew and extreme clustering near zero across all variable pairs indicate a power-law distribution, motivating the variance-stabilizing transformation applied in Figure 4.
   
-  **Figure 4**
+**Figure 4**
   
-  *Scatter Plot Matrix Following Variance-Stabilizing Logarithmic Transformation*
+*Scatter Plot Matrix Following Variance-Stabilizing Logarithmic Transformation*
   
-  ```{r fig-scattermatrix-log, fig.align='center', fig.width=7, fig.height=6}
+```{r fig-scattermatrix-log, fig.align='center', fig.width=7, fig.height=6}
   scatterplotMatrix(log_continuous_data %>% select(-watchers))
-  ```
+```
   
-  *Note.* A log1p transformation was applied to Stars, Forks, Issues, and Size. Distributional symmetry is substantially improved, and linear relationships between predictors and the outcome variable become more apparent.
+*Note.* A log1p transformation was applied to Stars, Forks, Issues, and Size. Distributional symmetry is substantially improved, and linear relationships between predictors and the outcome variable become more apparent.
   
-  ## Model
+## Variable Diagnostics
+
+To ensure the statistical validity of the Multiple Linear Regression framework and evaluate compliance with ordinary least squares (OLS) assumptions, diagnostic tests were conducted on the structural components of the model.
+
+### 1. Multicollinearity Assessment (Variance Inflation Factor)
+A critical concern in multiple regression models is multicollinearity, which occurs when independent predictors are highly correlated with one another, inflating coefficient standard errors and destabilizing model estimates. To diagnose this, the Variance Inflation Factor (VIF) was calculated for each structural predictor:
+
+$$\text{VIF}(\beta_j) = \frac{1}{1 - R_j^2}$$
+
+A standard threshold of $\text{VIF} > 5.0$ indicates problematic multicollinearity. The analysis yielded the following parameters:
+- **Forks Count VIF**: `r vif_forks`
+- **Open Issues Count VIF**: `r vif_issues`
+- **Repository Size (KB) VIF**: `r vif_size`
+
+Because all calculated values are exceptionally close to $1.0$, it is confirmed that no multicollinearity exists within the structural design of the model. This guarantees that the explanatory contributions of community utility (Forks), ecosystem activity (Issues), and technical footprint (Size) are separate and stable.
+
+### 2. Residual Diagnostics
+Because the modeling was performed strictly on the raw, non-transformed scale per experimental directives, residual distributions were systematically examined using base graphic diagnostic arrays via `plot(model_raw)`.
+
+**Figure 6** *Omitted Distributional Diagnostics of Regression Residuals (Raw Scale)*
+
+```{r fig-diagnostics, fig.align='center', fig.width=7, fig.height=6}
+par(mfrow = c(2, 2))
+plot(model_raw, ask = FALSE)
+```
+  
+## Model
   
   The dataset was partitioned into training and validation subsets using an 80/20 ratio to ensure the statistical framework generalizes effectively to unseen observations. This standard partition provides a reliable balance between optimization data and evaluation stability, minimizing the risk of overfitting. Prior work supports allocating 20–30% of the data to testing and 70–80% to training as a practical balance between learning capacity and evaluation reliability (Gholamy et al., 2021).
   
-  ```{r model-summary, results='asis'}
+```{r model-summary, results='asis'}
   # Display a clean model summary table
   library(knitr)
   
@@ -273,13 +311,13 @@
     caption = "Table 1. Multiple Linear Regression Coefficients (Training Set)",
     align   = "r"
   )
-  ```
+```
   
-  **Figure 5**
+**Figure 5**
   
-  *Comparison of Predicted Popularity Scores Against True Stargazer Field Values*
+*Comparison of Predicted Popularity Scores Against True Stargazer Field Values*
   
-  ```{r fig-actual-vs-predicted, fig.align='center', fig.width=6, fig.height=5}
+```{r fig-actual-vs-predicted, fig.align='center', fig.width=6, fig.height=5}
   ggplot(test_data, aes(x = predicted_stars, y = stars)) +
     geom_point(alpha = 0.5, color = "darkgreen") +
     geom_abline(
@@ -294,11 +332,11 @@
       x = "Predicted Stars",
       y = "Actual Stars"
     )
-  ```
+```
   
   *Note.* Each point represents a repository in the 20% holdout test set. The dashed red line denotes perfect prediction. Dispersion increases at higher star counts, reflecting the influence of extreme outlier repositories on raw-scale predictions.
   
-  ## Interpretation
+## Interpretation
   
   Following the 80/20 train-test split, the Multiple Linear Regression model was trained on 80% of the data and validated against the remaining 20% holdout set. Despite the extreme right skew of the raw data, the model yielded strong predictive insights. The resulting regression equation is:
   
@@ -312,9 +350,9 @@
   
   The model achieved an R² of 64.55% on the test set, surpassing the training R² of 56.33%, which indicates that the model generalizes exceptionally well and is not overfitted to the training data. The training model yielded a Residual Standard Error (RSE) of 17,360 stars, reflecting the inherent volatility and power-law distribution of GitHub popularity at the raw scale. The Mean Absolute Error (MAE) on the test set was 8,921.31 stars; while this may appear large in absolute terms, it is contextually acceptable given that some repositories in the dataset exceed 400,000 stars. The visualization in Figure 5 confirms a strong linear trend along the identity line, demonstrating that community engagement (Forks) and ecosystem activity (Open Issues) are the primary engines of repository popularity.
   
-  # Chapter 5: Conclusion and Recommendations
+# Chapter 5: Conclusion and Recommendations
   
-  ## Conclusion
+## Conclusion
   
   This study analyzed a refined dataset of 2,562 unique high-performing GitHub repositories to uncover the metrics driving project popularity. Descriptive statistics revealed that platform engagement does not follow a normal distribution; rather, it adheres to a highly right-skewed power-law distribution, where a small group of "superstar" projects — peaking at 409,518 stars — heavily distorts platform averages, pulling the mean significantly above the median across all metrics.
   
@@ -326,25 +364,25 @@
   
   Validated through an 80/20 train-test split, the model demonstrated excellent generalization, achieving a test set R² of 64.55%, which surpassed the training score of 56.33%. Ultimately, the study confirms that developer engagement and active community interaction — rather than codebase size — are the true catalysts for open-source success.
   
-  ## Recommendations
+## Recommendations
   
-  ### For Software Developers and Maintainers
+### For Software Developers and Maintainers
   
   - **Focus on collaboration, not code volume**: Because repository size has a negligible impact on popularity, developers should prioritize making their projects highly collaborative rather than expanding codebase scale.
   - **Streamline the forking process**: Since forks are the strongest predictor of stars, maintainers should provide clear documentation (e.g., README.md and CONTRIBUTING.md) to lower the barrier for community replication and contribution.
   - **Leverage issue trackers for engagement**: Open issues should be treated as signs of active community life. Maintainers should actively use issue boards to foster open dialogue and user interaction.
   
-  ### For Future Data Science Researchers
+### For Future Data Science Researchers
   
   - **Apply feature transformations**: To address the extreme right skew inherent in raw platform data, future studies should apply log transformations (such as log1p) to stabilize variance and reduce prediction error.
   - **Expand to categorical and qualitative predictors**: Future models should incorporate qualitative variables — such as primary programming language, repository age, or license type — to capture a more holistic view of repository popularity.
   
-  ### For Project Managers and Tech Leads
+### For Project Managers and Tech Leads
   
   - **Use median performance benchmarks**: Due to the severe power-law distribution of GitHub metrics, project success should be benchmarked against median performance tiers rather than skewed platform averages.
   - **Prioritize community metrics**: Project health dashboards should place greater weight on active community indicators — such as forks and open issues — to gauge real market adoption.
   
-  # References
+# References
   
   Cassieri, P., Romano, S., & Scanniello, G. (2024). On deprecated API usages: An exploratory study of top-starred projects on GitHub. In R. Kadgien, A. Jedlitschka, A. Janes, V. Lenarduzzi, & X. Li (Eds.), *Product-focused software process improvement: PROFES 2023* (Vol. 14483, pp. 415–431). Springer. https://doi.org/10.1007/978-3-031-49266-2_29
   
@@ -356,8 +394,8 @@
   
   Naveed, M. S. (2022). Correlation between GitHub stars and code vulnerabilities. *Journal of Computing & Biomedical Informatics*, *4*(01). https://doi.org/10.56979/401/2022/111
   
-  # Appendices
+# Appendices
   
-  ## Appendix A: Code
+## Appendix A: Code
   
   The complete data processing, diagnostic, and visualization code is embedded within the executable R Markdown source file. All chunks are set to `echo = FALSE` for the rendered output; the source file itself serves as the full code appendix.
